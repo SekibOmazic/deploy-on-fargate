@@ -4,7 +4,7 @@
 
 Make sure you have a domain and a certificate registered with ACM. Create an SSM Parameter named "CertificateArn-<DOMAIN_NAME>" and store the certificate Arn.
 
-Create a secret in AWS Secrets Manager and store your Github OAuth token (for more details see [service-stack.ts](infra/rolling/lib/service-stack.ts) )
+Create a secret in AWS Secrets Manager and store your Github OAuth token (for more details see [pipeline-stack.ts](infra/rolling/lib/pipeline-stack.ts) )
 
 Change the variables in [rolling.ts](infra/rolling/bin/rolling.ts)
 

@@ -7,3 +7,5 @@ Resources:
         LoadBalancerInfo:
           ContainerName: "simple-api"
           ContainerPort: 80
+Hooks:
+  - AfterAllowTestTraffic: "CodeDeployHook_-blue-green-fargate-_pre-traffic-hook"
