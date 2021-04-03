@@ -1,0 +1,390 @@
+Resources:
+  demoAppEcrRepoF335E680:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      RepositoryName: deploy-on-fargate
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/demoAppEcrRepo/Resource
+  deployOnFargateCodeBuildRole8B619025:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deployOnFargateCodeBuild/Role/Resource
+  deployOnFargateCodeBuildRoleDefaultPolicyA909390C:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - :logs:us-east-1:486453932063:log-group:/aws/codebuild/
+                    - Ref: deployOnFargateCodeBuild22BA8B57
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - :logs:us-east-1:486453932063:log-group:/aws/codebuild/
+                    - Ref: deployOnFargateCodeBuild22BA8B57
+                    - :*
+          - Action:
+              - codebuild:CreateReportGroup
+              - codebuild:CreateReport
+              - codebuild:UpdateReport
+              - codebuild:BatchPutTestCases
+              - codebuild:BatchPutCodeCoverages
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - :codebuild:us-east-1:486453932063:report-group/
+                  - Ref: deployOnFargateCodeBuild22BA8B57
+                  - -*
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:DeleteObject*
+              - s3:PutObject
+              - s3:Abort*
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - deploytofargateArtifactsBucket58E9A129
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - deploytofargateArtifactsBucket58E9A129
+                        - Arn
+                    - /*
+          - Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+              - kms:Encrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+                - Arn
+          - Action:
+              - kms:Decrypt
+              - kms:Encrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: deployOnFargateCodeBuildRoleDefaultPolicyA909390C
+      Roles:
+        - Ref: deployOnFargateCodeBuildRole8B619025
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deployOnFargateCodeBuild/Role/DefaultPolicy/Resource
+  deployOnFargateCodeBuild22BA8B57:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ECR_REPOSITORY_URI
+            Type: PLAINTEXT
+            Value:
+              Fn::Join:
+                - ""
+                - - Fn::Select:
+                      - 4
+                      - Fn::Split:
+                          - ":"
+                          - Fn::GetAtt:
+                              - demoAppEcrRepoF335E680
+                              - Arn
+                  - .dkr.ecr.
+                  - Fn::Select:
+                      - 3
+                      - Fn::Split:
+                          - ":"
+                          - Fn::GetAtt:
+                              - demoAppEcrRepoF335E680
+                              - Arn
+                  - "."
+                  - Ref: AWS::URLSuffix
+                  - /
+                  - Ref: demoAppEcrRepoF335E680
+          - Name: AWS_ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: "486453932063"
+        Image: aws/codebuild/standard:4.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole:
+        Fn::GetAtt:
+          - deployOnFargateCodeBuildRole8B619025
+          - Arn
+      Source:
+        BuildSpec: infra/rolling/buildspec.yaml
+        Type: CODEPIPELINE
+      Description: Code build project for the application
+      EncryptionKey:
+        Fn::GetAtt:
+          - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+          - Arn
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deployOnFargateCodeBuild/Resource
+  deploytofargateArtifactsBucketEncryptionKey1CF93F1A:
+    Type: AWS::KMS::Key
+    Properties:
+      KeyPolicy:
+        Statement:
+          - Action: kms:*
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - :iam::486453932063:root
+            Resource: "*"
+        Version: "2012-10-17"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/ArtifactsBucketEncryptionKey/Resource
+  deploytofargateArtifactsBucketEncryptionKeyAlias37D03F91:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/codepipeline-fargaterollingpipelinedeploytofargatedd9ab22d
+      TargetKeyId:
+        Fn::GetAtt:
+          - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+          - Arn
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/ArtifactsBucketEncryptionKeyAlias/Resource
+  deploytofargateArtifactsBucket58E9A129:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID:
+                Fn::GetAtt:
+                  - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+                  - Arn
+              SSEAlgorithm: aws:kms
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/ArtifactsBucket/Resource
+  deploytofargateRole1042912D:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/Role/Resource
+  deploytofargateRoleDefaultPolicyD9060541:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:DeleteObject*
+              - s3:PutObject
+              - s3:Abort*
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - deploytofargateArtifactsBucket58E9A129
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - deploytofargateArtifactsBucket58E9A129
+                        - Arn
+                    - /*
+          - Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+              - kms:Encrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+                - Arn
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - deploytofargateBuildCodeBuildCodePipelineActionRoleEFDA98FC
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: deploytofargateRoleDefaultPolicyD9060541
+      Roles:
+        - Ref: deploytofargateRole1042912D
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/Role/DefaultPolicy/Resource
+  deploytofargateFF96508A:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn:
+        Fn::GetAtt:
+          - deploytofargateRole1042912D
+          - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: "1"
+              Configuration:
+                Owner: SekibOmazic
+                Repo: deploy-on-fargate
+                Branch: master
+                OAuthToken: "{{resolve:ssm-secure:github-oauth-token:1}}"
+                PollForSourceChanges: false
+              Name: GitHubSource
+              OutputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName:
+                  Ref: deployOnFargateCodeBuild22BA8B57
+              InputArtifacts:
+                - Name: SourceArtifact
+              Name: CodeBuild
+              OutputArtifacts:
+                - Name: BuildArtifact
+              RoleArn:
+                Fn::GetAtt:
+                  - deploytofargateBuildCodeBuildCodePipelineActionRoleEFDA98FC
+                  - Arn
+              RunOrder: 1
+          Name: Build
+      ArtifactStore:
+        EncryptionKey:
+          Id:
+            Fn::GetAtt:
+              - deploytofargateArtifactsBucketEncryptionKey1CF93F1A
+              - Arn
+          Type: KMS
+        Location:
+          Ref: deploytofargateArtifactsBucket58E9A129
+        Type: S3
+    DependsOn:
+      - deploytofargateRoleDefaultPolicyD9060541
+      - deploytofargateRole1042912D
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/Resource
+  deploytofargateSourceGitHubSourceWebhookResource2925DCCA:
+    Type: AWS::CodePipeline::Webhook
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: "{{resolve:ssm-secure:github-oauth-token:1}}"
+      Filters:
+        - JsonPath: $.ref
+          MatchEquals: refs/heads/{Branch}
+      TargetAction: GitHubSource
+      TargetPipeline:
+        Ref: deploytofargateFF96508A
+      TargetPipelineVersion: 1
+      RegisterWithThirdParty: true
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/Source/GitHubSource/WebhookResource
+  deploytofargateBuildCodeBuildCodePipelineActionRoleEFDA98FC:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - :iam::486453932063:root
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/Build/CodeBuild/CodePipelineActionRole/Resource
+  deploytofargateBuildCodeBuildCodePipelineActionRoleDefaultPolicy9F28F507:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - codebuild:StopBuild
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - deployOnFargateCodeBuild22BA8B57
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: deploytofargateBuildCodeBuildCodePipelineActionRoleDefaultPolicy9F28F507
+      Roles:
+        - Ref: deploytofargateBuildCodeBuildCodePipelineActionRoleEFDA98FC
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/deploy-to-fargate/Build/CodeBuild/CodePipelineActionRole/DefaultPolicy/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAAE02QwU7DMAyGn4V75m0CIXEDduRSlQPnzjXCTRpXcbIJRXl32mQITv9n6ffnKEd4eoTD3fNw1R2Odp9RAkF+jwNacxKvMSSM5vTpe1JJAamYrZsJA+SeFlGOEr5b43cqBmWkc2I3Qu54IceeuiATNdcNi+FhXi3iqO5v2YljrLpGTbXcHH+22vjHH3T+ErHF2Fkhv1FVbPHieNBtqFCM3kN+TWipvqRRKcX49QxMur8cH+CwfsmkzLuQfOSZoG/5AzkaxuAuAQAA
+    Metadata:
+      aws:cdk:path: fargate-rolling-pipeline/CDKMetadata/Default
+
