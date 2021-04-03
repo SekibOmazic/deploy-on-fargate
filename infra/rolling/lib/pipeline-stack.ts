@@ -33,6 +33,7 @@ export class PipelineStack extends cdk.Stack {
 
     const sourceAction = new codepipeline_actions.GitHubSourceAction({
       actionName: 'GitHubSource',
+      branch: 'main',
       owner: props.repoOwner,
       repo: props.repoName,
       oauthToken: githubAccessToken,
@@ -83,6 +84,7 @@ export class PipelineStack extends cdk.Stack {
     // PIPELINE STAGES
 
     const pipeline = new codepipeline.Pipeline(this, 'deploy-to-fargate', {
+      pipelineName: 'deploy-to-fargate-rolling',
       stages: [
         {
           stageName: 'Source',

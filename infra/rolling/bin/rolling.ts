@@ -9,6 +9,7 @@ const GITHUB_REPO_OWNER = 'SekibOmazic'
 const app = new cdk.App()
 
 new PipelineStack(app, 'fargate-rolling-pipeline', {
+  stackName: 'deploy-on-fargate-rolling-pipeline',
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION,
