@@ -22,12 +22,11 @@ export class PipelineStack extends cdk.Stack {
     })
 
     // SOURCE
-    // const githubAccessToken = cdk.SecretValue.secretsManager(
-    //   'github-oauth-token'
-    // )
-    const githubAccessToken = cdk.SecretValue.ssmSecure(
-      'github-oauth-token',
-      '1'
+    const githubAccessToken = cdk.SecretValue.secretsManager(
+      '/github.com/sekibomazic',
+      {
+        jsonField: 'token',
+      }
     )
 
     const sourceOutput = new codepipeline.Artifact('SourceArtifact')
