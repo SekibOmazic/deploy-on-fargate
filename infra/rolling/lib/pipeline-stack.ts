@@ -3,10 +3,9 @@ import * as codebuild from '@aws-cdk/aws-codebuild'
 import * as codepipeline from '@aws-cdk/aws-codepipeline'
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions'
 import * as ecr from '@aws-cdk/aws-ecr'
+import * as iam from '@aws-cdk/aws-iam'
 
-import { StackProps } from '@aws-cdk/core'
-
-export interface PipelineStackProps extends StackProps {
+export interface PipelineStackProps extends cdk.StackProps {
   readonly repoName: string
   readonly repoOwner: string
 }
@@ -65,11 +64,27 @@ export class PipelineStack extends cdk.Stack {
             },
           },
         },
-        // source: codebuild.Source.gitHub({
-        //   repo: props.repoName,
-        //   owner: props.repoOwner,
-        // }),
       }
+    )
+    buildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ecr:GetAuthorizationToken'],
+        resources: ['*'],
+      })
+    )
+    buildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'ecr:GetDownloadUrlForLayer',
+          'ecr:BatchGetImage',
+          'ecr:BatchCheckLayerAvailability',
+          'ecr:PutImage',
+          'ecr:InitiateLayerUpload',
+          'ecr:UploadLayerPart',
+          'ecr:CompleteLayerUpload',
+        ],
+        resources: [ecrRepo.repositoryArn],
+      })
     )
 
     const buildOutput = new codepipeline.Artifact('BuildArtifact')
