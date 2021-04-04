@@ -3,22 +3,30 @@ import * as codebuild from '@aws-cdk/aws-codebuild'
 import * as codepipeline from '@aws-cdk/aws-codepipeline'
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions'
 import * as ecr from '@aws-cdk/aws-ecr'
+import * as ecs from '@aws-cdk/aws-ecs'
 import * as iam from '@aws-cdk/aws-iam'
 
-export interface PipelineStackProps extends cdk.StackProps {
-  readonly repoName: string
-  readonly repoOwner: string
+export interface PipelineProps {
+  readonly githubRepoName: string
+  readonly githubRepoOwner: string
+  readonly account: string
+
+  readonly service: ecs.IBaseService
+  readonly containerName: string
+  readonly ecrRepo: ecr.Repository
 }
 
-export class PipelineStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props: PipelineStackProps) {
-    super(scope, id, props)
+export class Pipeline extends cdk.Construct {
+  readonly service: ecs.IBaseService
+  readonly containerName: string
+  readonly ecrRepo: ecr.Repository
 
-    // ECR repository for the docker images
-    const ecrRepo = new ecr.Repository(this, 'demoAppEcrRepo', {
-      repositoryName: props.repoName,
-      imageScanOnPush: true,
-    })
+  constructor(scope: cdk.Construct, id: string, props: PipelineProps) {
+    super(scope, id)
+
+    this.service = props.service
+    this.ecrRepo = props.ecrRepo
+    this.containerName = props.containerName
 
     // SOURCE
     const githubAccessToken = cdk.SecretValue.secretsManager(
@@ -33,8 +41,8 @@ export class PipelineStack extends cdk.Stack {
     const sourceAction = new codepipeline_actions.GitHubSourceAction({
       actionName: 'GitHubSource',
       branch: 'main',
-      owner: props.repoOwner,
-      repo: props.repoName,
+      owner: props.githubRepoOwner,
+      repo: props.githubRepoName,
       oauthToken: githubAccessToken,
       output: sourceOutput,
     })
@@ -55,11 +63,11 @@ export class PipelineStack extends cdk.Stack {
           privileged: true,
           environmentVariables: {
             ECR_REPOSITORY_URI: {
-              value: ecrRepo.repositoryUri,
+              value: this.ecrRepo.repositoryUri,
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
             },
             AWS_ACCOUNT_ID: {
-              value: props.env!.account!,
+              value: props.account,
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
             },
           },
@@ -83,7 +91,7 @@ export class PipelineStack extends cdk.Stack {
           'ecr:UploadLayerPart',
           'ecr:CompleteLayerUpload',
         ],
-        resources: [ecrRepo.repositoryArn],
+        resources: [this.ecrRepo.repositoryArn],
       })
     )
 
@@ -94,6 +102,13 @@ export class PipelineStack extends cdk.Stack {
       project: buildProject,
       input: sourceOutput,
       outputs: [buildOutput],
+    })
+
+    // DEPLOY
+    const deployAction = new codepipeline_actions.EcsDeployAction({
+      actionName: 'ECSDeploy_Action',
+      input: buildOutput,
+      service: this.service,
     })
 
     // PIPELINE STAGES
@@ -109,11 +124,10 @@ export class PipelineStack extends cdk.Stack {
           stageName: 'Build',
           actions: [buildAction],
         },
-        // TODO
-        // {
-        //   stageName: 'Deploy-to-ECS',
-        //   actions: [deployAction],
-        // }
+        {
+          stageName: 'Deploy',
+          actions: [deployAction],
+        },
       ],
     })
   }

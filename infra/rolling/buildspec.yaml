@@ -2,6 +2,8 @@ version: 0.2
 
 # AWS_ACCOUNT_ID and ECR_REPOSITORY_URI are passed from the pipeline
 
+# important: https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html
+
 phases:
   install:
     runtime-versions:
@@ -26,7 +28,8 @@ phases:
       - echo Pushing the Docker images...
       - docker push $ECR_REPOSITORY_URI:latest
       - docker push $ECR_REPOSITORY_URI:$TAG
-      - printf '{"ImageURI":"%s:%s"}' $ECR_REPOSITORY_URI $TAG > imageDetail.json
+      - printf "[{\"name\":\"${CONTAINER_NAME}\",\"imageUri\":\"${ECR_REPOSITORY_URI}:latest\"}]" > imagedefinitions.json
+      # - printf '{"ImageURI":"%s:%s"}' $ECR_REPOSITORY_URI $TAG > imageDetail.json
 artifacts:
   files:
-    - imageDetail.json
+    - imagedefinitions.json
