@@ -20,6 +20,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
+      - npm run cdk synth -- -o build
       - docker build -t $ECR_REPOSITORY_URI:latest .
       - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$TAG
   post_build:
@@ -28,8 +29,10 @@ phases:
       - echo Pushing the Docker images...
       - docker push $ECR_REPOSITORY_URI:latest
       - docker push $ECR_REPOSITORY_URI:$TAG
-      - printf "[{\"name\":\"${CONTAINER_NAME}\",\"imageUri\":\"${ECR_REPOSITORY_URI}:latest\"}]" > imagedefinitions.json
+      # - printf "[{\"name\":\"${CONTAINER_NAME}\",\"imageUri\":\"${ECR_REPOSITORY_URI}:latest\"}]" > imagedefinitions.json
       # - printf '{"ImageURI":"%s:%s"}' $ECR_REPOSITORY_URI $TAG > imageDetail.json
 artifacts:
+  base-directory: 'build'
   files:
-    - imagedefinitions.json
+    # name of the stack
+    - SimpleApi.template.json

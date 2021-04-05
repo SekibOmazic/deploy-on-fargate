@@ -8,23 +8,18 @@ import { ApplicationLoadBalancedFargateService } from '@aws-cdk/aws-ecs-patterns
 import { HttpCodeTarget } from '@aws-cdk/aws-elasticloadbalancingv2'
 import { HostedZone } from '@aws-cdk/aws-route53'
 import { StringParameter } from '@aws-cdk/aws-ssm'
-import { IBaseService } from '@aws-cdk/aws-ecs'
 
-export interface ServiceProps {
+export interface ServiceStackProps extends cdk.StackProps {
   readonly domainName: string
   readonly domainZone: string
   readonly ecrRepoName: string
 }
 
-export class Service extends cdk.Construct {
+export class ServiceStack extends cdk.Stack {
   private fargateService: ApplicationLoadBalancedFargateService
 
-  public readonly containerName: string
-  public readonly ecrRepo: Repository
-  public readonly service: IBaseService
-
-  constructor(scope: cdk.Construct, id: string, props: ServiceProps) {
-    super(scope, id)
+  constructor(scope: cdk.Construct, id: string, props: ServiceStackProps) {
+    super(scope, id, props)
 
     const domainZone = HostedZone.fromLookup(this, 'Zone', {
       domainName: props.domainZone,
@@ -45,10 +40,10 @@ export class Service extends cdk.Construct {
       certificateArn
     )
 
-    // ECR
+    // ECR repository for the docker images
     const ecrRepo = Repository.fromRepositoryName(
       this,
-      'EcrRepo',
+      'Repo',
       props.ecrRepoName
     )
     const tag = process.env.IMAGE_TAG ? process.env.IMAGE_TAG : 'latest'
@@ -73,8 +68,6 @@ export class Service extends cdk.Construct {
         propagateTags: PropagatedTagSource.SERVICE,
       }
     )
-    // needed in Pipeline construct
-    this.service = this.fargateService.service
 
     // Alarms: monitor 500s and unhealthy hosts on target groups
     new Alarm(this, 'TargetGroupUnhealthyHosts', {
@@ -96,9 +89,6 @@ export class Service extends cdk.Construct {
 
     new cdk.CfnOutput(this, 'ServiceName', {
       value: this.fargateService.service.serviceName,
-    })
-    new cdk.CfnOutput(this, 'ContainerName', {
-      value: this.fargateService.taskDefinition.defaultContainer!.containerName,
     })
   }
 }

@@ -3,30 +3,23 @@ import * as codebuild from '@aws-cdk/aws-codebuild'
 import * as codepipeline from '@aws-cdk/aws-codepipeline'
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions'
 import * as ecr from '@aws-cdk/aws-ecr'
-import * as ecs from '@aws-cdk/aws-ecs'
 import * as iam from '@aws-cdk/aws-iam'
 
-export interface PipelineProps {
+export interface PipelineStackProps extends cdk.StackProps {
   readonly githubRepoName: string
   readonly githubRepoOwner: string
-  readonly account: string
-
-  readonly service: ecs.IBaseService
-  readonly containerName: string
-  readonly ecrRepo: ecr.Repository
 }
 
-export class Pipeline extends cdk.Construct {
-  readonly service: ecs.IBaseService
-  readonly containerName: string
-  readonly ecrRepo: ecr.Repository
+export class PipelineStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props: PipelineStackProps) {
+    super(scope, id, props)
 
-  constructor(scope: cdk.Construct, id: string, props: PipelineProps) {
-    super(scope, id)
-
-    this.service = props.service
-    this.ecrRepo = props.ecrRepo
-    this.containerName = props.containerName
+    // ECR repository for the docker images
+    const ecrRepo = new ecr.Repository(this, 'EcrRepo', {
+      // just a convention I like: ECR repo and the Github repo have the same name
+      repositoryName: props.githubRepoName,
+      imageScanOnPush: true,
+    })
 
     // SOURCE
     const githubAccessToken = cdk.SecretValue.secretsManager(
@@ -41,8 +34,8 @@ export class Pipeline extends cdk.Construct {
     const sourceAction = new codepipeline_actions.GitHubSourceAction({
       actionName: 'GitHubSource',
       branch: 'main',
-      owner: props.githubRepoOwner,
-      repo: props.githubRepoName,
+      owner: props.githubRepoName,
+      repo: props.githubRepoOwner,
       oauthToken: githubAccessToken,
       output: sourceOutput,
     })
@@ -63,11 +56,11 @@ export class Pipeline extends cdk.Construct {
           privileged: true,
           environmentVariables: {
             ECR_REPOSITORY_URI: {
-              value: this.ecrRepo.repositoryUri,
+              value: ecrRepo.repositoryUri,
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
             },
             AWS_ACCOUNT_ID: {
-              value: props.account,
+              value: props.env!.account!,
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
             },
           },
@@ -91,7 +84,7 @@ export class Pipeline extends cdk.Construct {
           'ecr:UploadLayerPart',
           'ecr:CompleteLayerUpload',
         ],
-        resources: [this.ecrRepo.repositoryArn],
+        resources: [ecrRepo.repositoryArn],
       })
     )
 
@@ -105,15 +98,30 @@ export class Pipeline extends cdk.Construct {
     })
 
     // DEPLOY
-    const deployAction = new codepipeline_actions.EcsDeployAction({
-      actionName: 'ECSDeploy_Action',
-      input: buildOutput,
-      service: this.service,
-    })
+    const changeSetName = 'SimpleApiChangeSet'
+    const createChangeSetAction = new codepipeline_actions.CloudFormationCreateReplaceChangeSetAction(
+      {
+        actionName: 'CreateChangeSet',
+        stackName: 'SimpleApi',
+        changeSetName,
+        runOrder: 1,
+        adminPermissions: true,
+        templatePath: buildOutput.atPath('SimpleApi.template.json'),
+      }
+    )
+
+    const executeChangeSetAction = new codepipeline_actions.CloudFormationExecuteChangeSetAction(
+      {
+        actionName: 'ExecuteChangeSet',
+        stackName: 'SimpleApi',
+        changeSetName,
+        runOrder: 2,
+      }
+    )
 
     // PIPELINE STAGES
 
-    const pipeline = new codepipeline.Pipeline(this, 'deploy-to-fargate', {
+    new codepipeline.Pipeline(this, 'deploy-to-fargate-rolling', {
       pipelineName: 'deploy-to-fargate-rolling',
       stages: [
         {
@@ -126,7 +134,7 @@ export class Pipeline extends cdk.Construct {
         },
         {
           stageName: 'Deploy',
-          actions: [deployAction],
+          actions: [createChangeSetAction, executeChangeSetAction],
         },
       ],
     })
