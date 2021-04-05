@@ -8,6 +8,10 @@ phases:
   install:
     runtime-versions:
       nodejs: latest
+    # commands:
+    #   # Install CDK, upgrade npm
+    #   - npm install -g npm@latest
+    #   - npm update -g aws-cdk
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -30,7 +34,9 @@ phases:
       - echo Build completed on `date`
       # Synthesize CloudFormation templates
       - cd $CODEBUILD_SRC_DIR/infra/rolling
-      - npm install
+      - npm ci
+      # check cdk version
+      - npm run cdk:version 
       - npm run build
       - npm run cdk synth -- -o build
       - ls -al build
