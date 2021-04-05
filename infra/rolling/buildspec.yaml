@@ -41,7 +41,7 @@ phases:
       # - printf "[{\"name\":\"${CONTAINER_NAME}\",\"imageUri\":\"${ECR_REPOSITORY_URI}:latest\"}]" > imagedefinitions.json
       # - printf '{"ImageURI":"%s:%s"}' $ECR_REPOSITORY_URI $TAG > imageDetail.json
 artifacts:
-  base-directory: 'build'
+  base-directory: 'infra/rolling/build'
   files:
-    # name of the stack
+    # CloudFormation template of the stack
     - SimpleApi.template.json
