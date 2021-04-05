@@ -30,7 +30,7 @@ phases:
       - echo Build completed on `date`
       # Synthesize CloudFormation templates
       - cd $CODEBUILD_SRC_DIR/infra/rolling
-      - npm ci
+      - npm install
       - npm run build
       - npm run cdk synth -- -o build
       - ls -al build
