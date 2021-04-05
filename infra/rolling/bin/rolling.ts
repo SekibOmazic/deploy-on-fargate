@@ -16,6 +16,10 @@ new ServiceStack(app, 'SimpleApi', {
   domainName: DOMAIN_NAME,
   domainZone: DOMAIN_ZONE,
   ecrRepoName: ECR_REPOSITORY_NAME,
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION,
+  },
 })
 
 new PipelineStack(app, 'Pipeline', {
