@@ -1,5 +1,5 @@
 {
-  "name": "rolling deployment",
+  "name": "rolling-deployment",
   "version": "0.1.0",
   "bin": {
     "rolling": "bin/rolling.js"
