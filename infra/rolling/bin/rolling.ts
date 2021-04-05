@@ -13,6 +13,7 @@ const ECR_REPOSITORY_NAME = 'simple-api'
 const app = new cdk.App()
 
 new ServiceStack(app, 'SimpleApi', {
+  stackName: 'SimpleApi',
   domainName: DOMAIN_NAME,
   domainZone: DOMAIN_ZONE,
   ecrRepoName: ECR_REPOSITORY_NAME,
@@ -23,7 +24,7 @@ new ServiceStack(app, 'SimpleApi', {
 })
 
 new PipelineStack(app, 'Pipeline', {
-  stackName: 'fargate-rolling-deployment-pipeline',
+  stackName: 'SimpleApi-pipeline',
   githubRepoName: GITHUB_REPO_NAME,
   githubRepoOwner: GITHUB_REPO_OWNER,
   env: {

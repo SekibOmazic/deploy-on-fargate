@@ -34,8 +34,8 @@ export class PipelineStack extends cdk.Stack {
     const sourceAction = new codepipeline_actions.GitHubSourceAction({
       actionName: 'GitHubSource',
       branch: 'main',
-      owner: props.githubRepoName,
-      repo: props.githubRepoOwner,
+      owner: props.githubRepoOwner,
+      repo: props.githubRepoName,
       oauthToken: githubAccessToken,
       output: sourceOutput,
     })
