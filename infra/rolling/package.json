@@ -21,12 +21,17 @@
     "typescript": "~3.9.7"
   },
   "dependencies": {
+    "@aws-cdk/aws-certificatemanager": "^1.96.0",
+    "@aws-cdk/aws-cloudwatch": "^1.96.0",
     "@aws-cdk/aws-codebuild": "^1.96.0",
-    "@aws-cdk/aws-codedeploy": "^1.96.0",
     "@aws-cdk/aws-codepipeline": "^1.96.0",
     "@aws-cdk/aws-codepipeline-actions": "^1.96.0",
     "@aws-cdk/aws-ecr": "^1.96.0",
+    "@aws-cdk/aws-ecs": "^1.96.0",
     "@aws-cdk/aws-ecs-patterns": "^1.96.0",
+    "@aws-cdk/aws-elasticloadbalancingv2": "^1.96.0",
+    "@aws-cdk/aws-iam": "^1.96.0",
+    "@aws-cdk/aws-route53": "^1.96.0",
     "@aws-cdk/aws-ssm": "^1.96.0",
     "@aws-cdk/core": "1.96.0",
     "source-map-support": "^0.5.19"
