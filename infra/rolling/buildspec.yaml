@@ -19,18 +19,21 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - npm install
-      - npm run cdk synth -- -o build
-      - ls -al build
       - echo Building the Docker image...
       - docker build -t $ECR_REPOSITORY_URI:latest .
       - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$TAG
-  post_build:
-    commands:
-      - echo Build completed on `date`
       - echo Pushing the Docker images...
       - docker push $ECR_REPOSITORY_URI:latest
       - docker push $ECR_REPOSITORY_URI:$TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      # Synthesize CloudFormation templates
+      - cd $CODEBUILD_SRC_DIR/infra/rolling
+      - npm ci
+      - npm run build
+      - npm run cdk synth -- -o build
+      - ls -al build
       # - printf "[{\"name\":\"${CONTAINER_NAME}\",\"imageUri\":\"${ECR_REPOSITORY_URI}:latest\"}]" > imagedefinitions.json
       # - printf '{"ImageURI":"%s:%s"}' $ECR_REPOSITORY_URI $TAG > imageDetail.json
 artifacts:
