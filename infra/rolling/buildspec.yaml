@@ -4,6 +4,9 @@ version: 0.2
 
 # important: https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html
 
+env:
+  exported-variables:
+    - IMAGE_TAG
 phases:
   install:
     runtime-versions:
@@ -28,7 +31,10 @@ phases:
       - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$TAG
       - echo Pushing the Docker images...
       - docker push $ECR_REPOSITORY_URI:latest
-      - docker push $ECR_REPOSITORY_URI:$TAG
+      - docker push $ECR_REPOSITORY_URI:$
+      # save the declared tag as an environment variable,
+      # that is then exported in the 'exported-variables' section as a CodePipeline Variable
+      - export IMAGE_TAG=$TAG
   post_build:
     commands:
       - echo Build completed on `date`
