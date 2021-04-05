@@ -7,7 +7,11 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      docker: 18
+      nodejs: latest
+    commands:
+      # Install CDK, upgrade npm
+      - npm install -g npm@latest
+      - npm install -g aws-cdk
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -21,6 +25,7 @@ phases:
       - echo Build started on `date`
       - echo Building the Docker image...
       - npm run cdk synth -- -o build
+      - ls -al build
       - docker build -t $ECR_REPOSITORY_URI:latest .
       - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$TAG
   post_build:
