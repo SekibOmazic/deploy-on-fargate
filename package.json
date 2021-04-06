@@ -1,5 +1,5 @@
 {
-  "name": "blue-green-fargate",
+  "name": "deploy-on-fargate",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
