@@ -1,7 +1,27 @@
 {
   "containerDefinitions": [
     {
-      "name": "TASK_FAMILY",
+      "name": "xray-daemon",
+      "image": "amazon/aws-xray-daemon",
+      "cpu": 32,
+      "memoryReservation": 256,
+      "portMappings": [
+        {
+          "containerPort": 2000,
+          "protocol": "udp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/simple-api",
+          "awslogs-region": "AWS_REGION",
+          "awslogs-stream-prefix": "simple-api"
+        }
+      }
+    },
+    {
+      "name": "simple-api",
       "image": "REPOSITORY_URI:IMAGE_TAG",
       "portMappings": [
         {
@@ -11,21 +31,21 @@
       ],
       "essential": true,
       "dockerLabels": {
-        "name": "TASK_FAMILY"
+        "name": "simple-api"
       },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/TASK_FAMILY",
+          "awslogs-group": "/ecs/simple-api",
           "awslogs-region": "AWS_REGION",
-          "awslogs-stream-prefix": "TASK_FAMILY"
+          "awslogs-stream-prefix": "simple-api"
         }
       }
     }
   ],
   "taskRoleArn": "TASK_EXECUTION_ARN",
   "executionRoleArn": "TASK_EXECUTION_ARN",
-  "family": "TASK_FAMILY",
+  "family": "simple-api",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",

@@ -5,5 +5,5 @@ Resources:
       Properties:
         TaskDefinition: "<TASK_DEFINITION>"
         LoadBalancerInfo:
-          ContainerName: "TASK_FAMILY"
+          ContainerName: "simple-api"
           ContainerPort: 80
