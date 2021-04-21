@@ -12,8 +12,10 @@ export GITHUB_REPO_OWNER=<YOUR_GITHUB_NAME>
 export GITHUB_REPO_NAME=<YOUR_GITHUB_REPO>
 export DOCKERHUB_USERNAME=<YOUR_DOCKERHUB_USERNAME>
 export DOCKERHUB_PASSWORD=<YOUR_DOCKERHUB_PASSWORD>
-export API_NAME=simple-api
+export API_NAME=<YOUR_API_NAME>
+
 export CONTAINER_PORT=80
+
 export ECR_REPO_NAME=$(aws cloudformation describe-stacks --stack-name BlueGreenContainerImageStack --query 'Stacks[*].Outputs[?ExportName==`ecrRepoName`].OutputValue' --output text)
 export CODE_BUILD_PROJECT_NAME=$(aws cloudformation describe-stacks --stack-name BlueGreenContainerImageStack --query 'Stacks[*].Outputs[?ExportName==`codeBuildProjectName`].OutputValue' --output text)
 export ECS_TASK_ROLE_ARN=$(aws cloudformation describe-stacks --stack-name BlueGreenContainerImageStack --query 'Stacks[*].Outputs[?ExportName==`ecsTaskRoleArn`].OutputValue' --output text)

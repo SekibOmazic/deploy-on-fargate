@@ -4,7 +4,7 @@ GREEN="\033[1;32m"
 YELLOW="\033[1;33m"
 
 echo -e "${GREEN}Exporting domain data ...."
-export API_NAME=simple-api
+export API_NAME=<YOUR_API_NAME>
 export HOSTED_ZONE_NAME=<YOUR_HOSTED_ZONE_NAME>
 export DOMAIN_NAME=${API_NAME}.${HOSTED_ZONE_NAME}
 
