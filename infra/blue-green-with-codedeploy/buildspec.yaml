@@ -18,7 +18,6 @@ phases:
     commands:
       - aws --version
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      # - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/simple-api
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
       - aws ecr get-login-password | docker login --username AWS --password-stdin $REPOSITORY_URI
@@ -31,7 +30,11 @@ phases:
       - sed -i 's@IMAGE_TAG@'$IMAGE_TAG'@g' taskdef.json
       - sed -i 's@AWS_REGION@'$AWS_REGION'@g' taskdef.json
       - sed -i 's@TASK_EXECUTION_ARN@'$TASK_EXECUTION_ARN'@g' taskdef.json
+      - sed -i 's@API_NAME@'$API_NAME'@g' taskdef.json
       - echo Completed task definition update on `date`
+      - sed -i 's@<API_NAME>@'$API_NAME'@g' appspec.yaml
+      - echo Completed appspec.yaml update on `date`
+      - cat appspec.yaml
   post_build:
     commands:
       - docker images

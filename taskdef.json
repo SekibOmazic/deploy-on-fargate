@@ -14,14 +14,14 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/simple-api",
+          "awslogs-group": "/ecs/API_NAME",
           "awslogs-region": "AWS_REGION",
-          "awslogs-stream-prefix": "simple-api"
+          "awslogs-stream-prefix": "API_NAME"
         }
       }
     },
     {
-      "name": "simple-api",
+      "name": "API_NAME",
       "image": "REPOSITORY_URI:IMAGE_TAG",
       "portMappings": [
         {
@@ -31,21 +31,21 @@
       ],
       "essential": true,
       "dockerLabels": {
-        "name": "simple-api"
+        "name": "API_NAME"
       },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/simple-api",
+          "awslogs-group": "/ecs/API_NAME",
           "awslogs-region": "AWS_REGION",
-          "awslogs-stream-prefix": "simple-api"
+          "awslogs-stream-prefix": "API_NAME"
         }
       }
     }
   ],
   "taskRoleArn": "TASK_EXECUTION_ARN",
   "executionRoleArn": "TASK_EXECUTION_ARN",
-  "family": "simple-api",
+  "family": "API_NAME",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",

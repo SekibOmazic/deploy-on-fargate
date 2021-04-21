@@ -10,6 +10,9 @@ echo -e "${GREEN}Exporting DockerHub credentials ...."
 export DOCKERHUB_USERNAME=<YOUR_DOCKERHUB_USERNAME>
 export DOCKERHUB_PASSWORD=<YOUR_DOCKERHUB_PASSWORD>
 
+echo -e "${GREEN}Exporting api name ...."
+export API_NAME=<YOUR_API_NAME>
+
 echo -e "${GREEN}Start building the container image stack resources...."
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export AWS_DEFAULT_REGION=$(aws configure get region)

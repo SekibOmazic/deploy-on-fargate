@@ -23,9 +23,11 @@ test('Blue/Green deployment pipeline is created', () => {
     stack,
     'EcsBlueGreenBuildImage',
     {
+      apiName: 'simple-api',
       codeBuildRole: ecsBlueGreenRoles.codeBuildRole,
       ecsTaskRole: ecsBlueGreenRoles.ecsTaskRole,
       codeRepoName: 'deploy-on-fargate',
+      codeRepoOwner: 'me',
       dockerHubUsername: 'username',
       dockerHubPassword: 'password',
     }

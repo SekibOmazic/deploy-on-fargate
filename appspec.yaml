@@ -5,7 +5,7 @@ Resources:
       Properties:
         TaskDefinition: "<TASK_DEFINITION>"
         LoadBalancerInfo:
-          ContainerName: "simple-api"
+          ContainerName: "<API_NAME>" # replaced in buildspec.yaml
           ContainerPort: 80
 Hooks:
-  - AfterAllowTestTraffic: "CodeDeployHook_-blue-green-fargate-_pre-traffic-hook"
+  - AfterAllowTestTraffic: "CodeDeployHook_-<API_NAME>-_pre-traffic" # replaced in buildspec.yaml

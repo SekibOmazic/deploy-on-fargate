@@ -5,13 +5,13 @@ import * as codeBuild from '@aws-cdk/aws-codebuild'
 import * as secretsManager from '@aws-cdk/aws-secretsmanager'
 
 export interface EcsBlueGreenBuildImageProps {
-  readonly codeRepoOwner?: string
-  readonly codeRepoName?: string
-  readonly codeRepoDesc?: string
-  readonly ecsTaskRole?: iam.Role
-  readonly codeBuildRole?: iam.Role
-  readonly dockerHubUsername?: string
-  readonly dockerHubPassword?: string
+  readonly ecsTaskRole: iam.Role
+  readonly codeBuildRole: iam.Role
+  readonly apiName: string
+  readonly codeRepoOwner: string
+  readonly codeRepoName: string
+  readonly dockerHubUsername: string
+  readonly dockerHubPassword: string
 }
 
 export class EcsBlueGreenBuildImage extends cdk.Construct {
@@ -21,7 +21,7 @@ export class EcsBlueGreenBuildImage extends cdk.Construct {
   constructor(
     scope: cdk.Construct,
     id: string,
-    props: EcsBlueGreenBuildImageProps = {}
+    props: EcsBlueGreenBuildImageProps
   ) {
     super(scope, id)
 
@@ -63,6 +63,10 @@ export class EcsBlueGreenBuildImage extends cdk.Construct {
           },
           DOCKER_HUB_SECRET_ARN: {
             value: dockerHubSecret.ref,
+            type: codeBuild.BuildEnvironmentVariableType.PLAINTEXT,
+          },
+          API_NAME: {
+            value: props.apiName,
             type: codeBuild.BuildEnvironmentVariableType.PLAINTEXT,
           },
         },

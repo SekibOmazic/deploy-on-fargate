@@ -12,10 +12,11 @@ export class BlueGreenContainerImageStack extends cdk.Stack {
     new blueGreen.EcsBlueGreenBuildImage(this, 'EcsBlueGreenBuildImage', {
       codeBuildRole: roles.codeBuildRole,
       ecsTaskRole: roles.ecsTaskRole,
-      codeRepoOwner: process.env.GITHUB_REPO_OWNER,
-      codeRepoName: process.env.GITHUB_REPO_NAME,
-      dockerHubUsername: process.env.DOCKERHUB_USERNAME,
-      dockerHubPassword: process.env.DOCKERHUB_PASSWORD,
+      apiName: process.env.API_NAME || 'simple-api',
+      codeRepoOwner: process.env.GITHUB_REPO_OWNER!,
+      codeRepoName: process.env.GITHUB_REPO_NAME!,
+      dockerHubUsername: process.env.DOCKERHUB_USERNAME!,
+      dockerHubPassword: process.env.DOCKERHUB_PASSWORD!,
     })
   }
 }
