@@ -186,29 +186,27 @@ export class ServiceStack extends cdk.Stack {
       },
     })
 
-    // The IAM Role for CloudFormation to use to perform blue-green deployments.
+    // The IAM Role for CloudFormation to invoke Lambda validation function
+    const roleName = 'CodeDeployHookRole_' + props.apiName
     const servceRoleBlueGreen = new iam.Role(
       this,
       'blue-green-deployment-role',
       {
         assumedBy: new iam.ServicePrincipal('codedeploy.amazonaws.com'),
+        roleName,
       }
     )
 
     const serviceRoleblueGreenPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: [
-        'sts:AssumeRole',
-        'codedeploy:Get*',
-        'codedeploy:CreateCloudFormationDeployment',
-        // TODO: only 'lambda:InvokeFunction' on resource Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:CodeDeployHook_*'
+      actions: ['sts:AssumeRole', 'lambda:InvokeFunction'],
+      resources: [
+        `arn:aws:lambda:${props.env?.region}:${props.env?.account}:function:CodeDeployHook_*`,
       ],
-      resources: ['*'],
     })
 
     servceRoleBlueGreen.addToPolicy(serviceRoleblueGreenPolicy)
 
-    //
     this.addTransform('AWS::CodeDeployBlueGreen')
     const taskDefLogicalId = this.getLogicalId(
       taskDefinition.node.defaultChild as ecs.CfnTaskDefinition
@@ -224,16 +222,15 @@ export class ServiceStack extends cdk.Stack {
         },
       },
       additionalOptions: {
-        // After canary period, shift 100% of prod traffic, then wait 30 minutes
+        // After canary period, shift 100% of prod traffic, then wait 5 minutes
         terminationWaitTimeInMinutes: 5,
       },
       lifecycleEventHooks: {
         // invoke lifecycle event hook function after test traffic is live, but before prod traffic is live
         afterAllowTestTraffic:
-          'CodeDeployHook_-' + props.apiName + '-pre-traffic',
+          'CodeDeployHook_-' + props.apiName + '-_pre-traffic',
       },
-      // TODO: just use serviceRole: 'AWSCodeDeployRoleForECS'?
-      serviceRole: servceRoleBlueGreen.roleName, // 'CodeDeployHookRole_' + props.deploymentHooksStack,
+      serviceRole: roleName,
       applications: [
         {
           target: {
@@ -271,9 +268,5 @@ export class ServiceStack extends cdk.Stack {
       service: service.attrName,
       taskSetId: taskSet.attrId,
     })
-
-    // new cdk.CfnOutput(this, 'ServiceName', {
-    //   value: this.fargateService.service.serviceName,
-    // })
   }
 }

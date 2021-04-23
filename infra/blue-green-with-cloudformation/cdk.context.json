@@ -6,5 +6,9 @@
     "us-east-1d",
     "us-east-1e",
     "us-east-1f"
-  ]
+  ],
+  "hosted-zone:account=486453932063:domainName=delta-comsysto-reply.de:region=us-east-1": {
+    "Id": "/hostedzone/Z0849196BQLHBCQFMSD8",
+    "Name": "delta-comsysto-reply.de."
+  }
 }

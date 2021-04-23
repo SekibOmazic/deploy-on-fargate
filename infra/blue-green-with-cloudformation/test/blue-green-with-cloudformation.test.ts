@@ -1,9 +1,8 @@
-import { expect as expectCDK, haveResource } from '@aws-cdk/assert'
+import { countResources, expect as expectCDK } from '@aws-cdk/assert'
 import * as cdk from '@aws-cdk/core'
 import * as serviceStack from '../lib/service-stack'
-// import * as pipelineStack from '../lib/pipeline-stack'
 
-test('SQS Queue Created', () => {
+test('ServiceStack Created', () => {
   const app = new cdk.App()
   // WHEN
   const stack = new serviceStack.ServiceStack(app, 'ServiceStack', {
@@ -17,15 +16,14 @@ test('SQS Queue Created', () => {
     },
   })
   // THEN
-  // expectCDK(stack).to(haveResource("AWS::SQS::Queue",{
-  //   VisibilityTimeout: 300
-  // }));
+  expectCDK(stack).to(countResources('AWS::ECS::Service', 1))
+  expectCDK(stack).to(
+    countResources('AWS::ElasticLoadBalancingV2::LoadBalancer', 1)
+  )
+  expectCDK(stack).to(
+    countResources('AWS::ElasticLoadBalancingV2::Listener', 2)
+  )
+  expectCDK(stack).to(
+    countResources('AWS::ElasticLoadBalancingV2::TargetGroup', 2)
+  )
 })
-
-// test('SNS Topic Created', () => {
-//   const app = new cdk.App();
-//   // WHEN
-//   const stack = new BlueGreenWithCloudformation.BlueGreenWithCloudformationStack(app, 'MyTestStack');
-//   // THEN
-//   expectCDK(stack).to(haveResource("AWS::SNS::Topic"));
-// });
