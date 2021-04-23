@@ -1,0 +1,55 @@
+version: 0.2
+
+# AWS_ACCOUNT_ID and ECR_REPOSITORY_URI are passed from the pipeline
+
+# important: https://docs.aws.amazon.com/codepipeline/latest/userguide/file-reference.html
+
+env:
+  exported-variables:
+    - IMAGE_TAG
+phases:
+  install:
+    runtime-versions:
+      nodejs: latest
+    commands:
+      # upgrade npm
+      - npm install -g npm@latest
+      - npm --version
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - ECR_REPO=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+      - aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REPO
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - TAG=${COMMIT_HASH:=latest}
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $ECR_REPOSITORY_URI:latest .
+      - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$TAG
+      - echo Pushing the Docker images...
+      - docker push $ECR_REPOSITORY_URI:latest
+      - docker push $ECR_REPOSITORY_URI:$TAG
+      # save the declared tag as an environment variable,
+      # that is then exported in the 'exported-variables' section as a CodePipeline Variable
+      - export IMAGE_TAG=$TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      # Synthesize CloudFormation templates
+      - cd $CODEBUILD_SRC_DIR/infra/blue-green-with-cloudformation
+      - npm ci
+      - npm run build
+      - npm run cdk synth -- -o build
+      # - printf "[{\"name\":\"${CONTAINER_NAME}\",\"imageUri\":\"${ECR_REPOSITORY_URI}:latest\"}]" > imagedefinitions.json
+      - printf '{"ImageURI":"%s:%s"}' $ECR_REPOSITORY_URI $TAG > build/imageDetail.json
+      - ls -al build
+
+artifacts:
+  base-directory: 'infra/blue-green-with-cloudformation/build'
+  files:
+    # CloudFormation template of the stack
+    - SimpleApi.template.json
+    - imageDetail.json
