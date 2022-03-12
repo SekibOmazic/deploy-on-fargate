@@ -9,3 +9,5 @@ This is a code repository for the very simple REST API with Node.js and Express.
 [Blue-Green using CodeDeploy](BLUE-GREEN-CODEDEPLOY.md)
 
 [Blue-Green using CloudFormation](BLUE-GREEN-CLOUDFORMATION.md)
+
+Enjoy!
